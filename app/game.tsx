@@ -234,6 +234,9 @@ export default function GameScreen() {
     //         />
     //         {/* Overlay visuals on top of camera */}
     //         <View style={styles.cameraOverlay}>
+    //             {/* 👇 NEW INSTRUCTION TEXT */}
+    //             <Text style={styles.smileInstruction}>😁 SMILE! 😁</Text>
+
     //             <GameVisuals mode={mode} debugValue={debugData} />
     //         </View>
     //      </View>
