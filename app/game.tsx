@@ -18,7 +18,7 @@ import { GameVisuals } from '@/components/GameVisuals';
 
 // IMPORT STORAGE & DATA
 import { addPack, getPackCount, consumePack, addToCollection } from '@/utils/storage';
-import { ANIMALS } from '@/constants/GameData';
+import { ANIMAL } from '@/constants/GameData';
 
 export default function GameScreen() {
   const router = useRouter();
@@ -42,11 +42,11 @@ export default function GameScreen() {
   // const { hasPermission, requestPermission } = useCameraPermission();
 
   // Initialize the Face Detector
-  const { detectFaces } = useFaceDetector({
-    performanceMode: 'fast',
-    landmarkMode: 'none',
-    classificationMode: 'all', // Required for smile probability
-  });
+  // const { detectFaces } = useFaceDetector({
+  //   performanceMode: 'fast',
+  //   landmarkMode: 'none',
+  //   classificationMode: 'all', // Required for smile probability
+  // });
 
   // useEffect(() => {
   //   // Auto-request permission if in smile mode
@@ -129,7 +129,7 @@ export default function GameScreen() {
     const newPull = [];
     const newIds = [];
     for(let i=0; i<5; i++) {
-        const randomAnimal = ANIMALS[Math.floor(Math.random() * ANIMALS.length)];
+        const randomAnimal = ANIMAL[Math.floor(Math.random() * ANIMAL.length)];
         newPull.push(randomAnimal);
         newIds.push(randomAnimal.id);
     }
