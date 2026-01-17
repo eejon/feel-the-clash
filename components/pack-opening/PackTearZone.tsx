@@ -15,7 +15,7 @@ import * as Haptics from 'expo-haptics';
 
 const PACK_WIDTH = 220;
 const PACK_HEIGHT = 300;
-const TEAR_THRESHOLD = 180; // pixels to complete tear (increased for more satisfying drag)
+const TEAR_THRESHOLD = 300; // pixels to complete tear (longer drag for dramatic effect)
 
 interface PackTearZoneProps {
   onTearComplete: () => void;
@@ -34,7 +34,7 @@ export function PackTearZone({ onTearComplete, disabled }: PackTearZoneProps) {
     // Subtle idle wobble
     const interval = setInterval(() => {
       wobble.value = withSpring(Math.random() * 4 - 2, { damping: 10 });
-    }, 2000);
+    }, 500);
     return () => clearInterval(interval);
   }, []);
 
@@ -70,21 +70,23 @@ export function PackTearZone({ onTearComplete, disabled }: PackTearZoneProps) {
     .onUpdate((event) => {
       if (hasCompletedTear.value) return;
 
-      // Only allow downward swipe
-      const progress = Math.max(0, Math.min(1, event.translationY / TEAR_THRESHOLD));
-      tearProgress.value = progress;
+      // Only allow downward swipe with resistance
+      const rawProgress = Math.max(0, event.translationY / TEAR_THRESHOLD);
+      // Apply resistance curve - harder to tear as you go (power > 1 makes it resistant)
+      const resistedProgress = Math.min(1, Math.pow(rawProgress, 1.5));
+      tearProgress.value = resistedProgress;
     })
     .onEnd((event) => {
       if (hasCompletedTear.value) return;
 
-      if (tearProgress.value > 0.7 || event.velocityY > 500) {
-        // Complete the tear
+      if (tearProgress.value > 0.8 || event.velocityY > 1500) {
+        // Complete the tear with slower animation
         hasCompletedTear.value = true;
-        tearProgress.value = withTiming(1, { duration: 200 });
+        tearProgress.value = withTiming(1, { duration: 800 });
         runOnJS(handleTearComplete)();
       } else {
         // Snap back
-        tearProgress.value = withSpring(0, { damping: 15 });
+        tearProgress.value = withSpring(0, { damping: 12 });
       }
     });
 

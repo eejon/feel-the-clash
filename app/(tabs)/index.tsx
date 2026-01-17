@@ -133,7 +133,9 @@ export default function HomeScreen() {
   };
 
   const startChallenge = () => {
-    const modes = ['shake', 'slap', 'blow', 'smile'];
+    // const modes = ['shake', 'slap', 'blow', 'smile']; 
+    const modes = ['shake', 'slap', 'blow'];
+
     const randomMode = modes[Math.floor(Math.random() * modes.length)];
     router.push({ pathname: '/game', params: { mode: randomMode } });
   };
@@ -150,6 +152,10 @@ export default function HomeScreen() {
     setSwapModalVisible(false);
   };
 
+  const openSettings = () => {
+    router.push('/settings' as any);
+  };
+  
   const handleClearDataPress = () => {
     Alert.alert(
       "Reset Game Data?",

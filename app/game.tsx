@@ -6,19 +6,19 @@ import { Audio } from 'expo-av';
 import { GameVisuals } from '@/components/GameVisuals';
 
 // --- VISION CAMERA & FACE DETECTOR IMPORTS ---
-import { 
-  Camera, 
-  useCameraDevice, 
-  useCameraPermission, 
-  useFrameProcessor,
-  runAtTargetFps 
-} from 'react-native-vision-camera';
-import { useRunOnJS } from 'react-native-worklets-core';
-import { useFaceDetector } from 'react-native-vision-camera-face-detector';
+// import { 
+//   Camera, 
+//   useCameraDevice, 
+//   useCameraPermission, 
+//   useFrameProcessor,
+//   runAtTargetFps 
+// } from 'react-native-vision-camera';
+// import { useRunOnJS } from 'react-native-worklets-core';
+// import { useFaceDetector } from 'react-native-vision-camera-face-detector';
 
 // IMPORT STORAGE & DATA
 import { addPack, getPackCount, consumePack, addToCollection } from '@/utils/storage';
-import { ANIMALS } from '@/constants/GameData';
+import { ANIMAL } from '@/constants/GameData';
 
 export default function GameScreen() {
   const router = useRouter();
@@ -38,22 +38,22 @@ export default function GameScreen() {
   const historyRef = useRef([]);
 
   // --- CAMERA SETUP ---
-  const device = useCameraDevice('front');
-  const { hasPermission, requestPermission } = useCameraPermission();
+  // const device = useCameraDevice('front');
+  // const { hasPermission, requestPermission } = useCameraPermission();
 
   // Initialize the Face Detector
-  const { detectFaces } = useFaceDetector({
-    performanceMode: 'fast',
-    landmarkMode: 'none',
-    classificationMode: 'all', // Required for smile probability
-  });
+  // const { detectFaces } = useFaceDetector({
+  //   performanceMode: 'fast',
+  //   landmarkMode: 'none',
+  //   classificationMode: 'all', // Required for smile probability
+  // });
 
-  useEffect(() => {
-    // Auto-request permission if in smile mode
-    if (mode === 'smile' && !hasPermission) {
-      requestPermission();
-    }
-  }, [mode, hasPermission]);
+  // useEffect(() => {
+  //   // Auto-request permission if in smile mode
+  //   if (mode === 'smile' && !hasPermission) {
+  //     requestPermission();
+  //   }
+  // }, [mode, hasPermission]);
 
   useFocusEffect(
     useCallback(() => {
@@ -129,7 +129,7 @@ export default function GameScreen() {
     const newPull = [];
     const newIds = [];
     for(let i=0; i<5; i++) {
-        const randomAnimal = ANIMALS[Math.floor(Math.random() * ANIMALS.length)];
+        const randomAnimal = ANIMAL[Math.floor(Math.random() * ANIMAL.length)];
         newPull.push(randomAnimal);
         newIds.push(randomAnimal.id);
     }
@@ -141,27 +141,27 @@ export default function GameScreen() {
 
   // === SMILE DETECTION LOGIC ===
   
-  // Wrapper to allow the Worklet to call back to the main JS thread
-  const onSmileDetected = useRunOnJS((smileProb) => {
-      setDebugData({ smile: smileProb }); // Update Debug UI
-      // Threshold: 0.7 means 70% sure it's a smile
-      if (smileProb > 0.7 && isActive.current) {
-          handleWin();
-      }
-  }, []);
+  // // Wrapper to allow the Worklet to call back to the main JS thread
+  // const onSmileDetected = useRunOnJS((smileProb) => {
+  //     setDebugData({ smile: smileProb }); // Update Debug UI
+  //     // Threshold: 0.7 means 70% sure it's a smile
+  //     if (smileProb > 0.7 && isActive.current) {
+  //         handleWin();
+  //     }
+  // }, []);
 
-  const frameProcessor = useFrameProcessor((frame) => {
-    'worklet';
-    // Only run this logic 5 times per second to save battery
-    runAtTargetFps(5, () => {
-        const faces = detectFaces(frame);
+  // const frameProcessor = useFrameProcessor((frame) => {
+  //   'worklet';
+  //   // Only run this logic 5 times per second to save battery
+  //   runAtTargetFps(5, () => {
+  //       const faces = detectFaces(frame);
 
-        if (faces.length > 0) {
-            const smile = faces[0].smilingProbability || 0;
-            onSmileDetected(smile);
-        }
-    });
-  }, [detectFaces]); // Dependency is important!
+  //       if (faces.length > 0) {
+  //           const smile = faces[0].smilingProbability || 0;
+  //           onSmileDetected(smile);
+  //       }
+  //   });
+  // }, [detectFaces]); // Dependency is important!
 
   // === SENSOR LOGIC BLOCKS ===
   const runShake = () => {
@@ -219,29 +219,26 @@ export default function GameScreen() {
   // === RENDER HELPERS ===
   const renderGameContent = () => {
     // 1. SMILE MODE (Camera)
-    if (mode === 'smile') {
-       if (!hasPermission) return <Text style={{color:'#fff'}}>Requesting Camera...</Text>;
-       if (!device) return <Text style={{color:'#fff'}}>No Front Camera Found</Text>;
+    // if (mode === 'smile') {
+    //    if (!hasPermission) return <Text style={{color:'#fff'}}>Requesting Camera...</Text>;
+    //    if (!device) return <Text style={{color:'#fff'}}>No Front Camera Found</Text>;
 
-       return (
-         <View style={{ flex: 1, width: '100%', borderRadius: 20, overflow: 'hidden' }}>
-            <Camera
-                style={StyleSheet.absoluteFill}
-                device={device}
-                isActive={isActive.current}
-                frameProcessor={frameProcessor}
-                pixelFormat="yuv"
-            />
-            {/* Overlay visuals on top of camera */}
-            <View style={styles.cameraOverlay}>
-                {/* 👇 NEW INSTRUCTION TEXT */}
-                <Text style={styles.smileInstruction}>😁 SMILE! 😁</Text>
-
-                <GameVisuals mode={mode} debugValue={debugData} />
-            </View>
-         </View>
-       );
-    }
+    //    return (
+    //      <View style={{ flex: 1, width: '100%', borderRadius: 20, overflow: 'hidden' }}>
+    //         <Camera
+    //             style={StyleSheet.absoluteFill}
+    //             device={device}
+    //             isActive={isActive.current}
+    //             frameProcessor={frameProcessor}
+    //             pixelFormat="yuv"
+    //         />
+    //         {/* Overlay visuals on top of camera */}
+    //         <View style={styles.cameraOverlay}>
+    //             <GameVisuals mode={mode} debugValue={debugData} />
+    //         </View>
+    //      </View>
+    //    );
+    // }
 
     // 2. STANDARD MODES (Sensors)
     return <GameVisuals mode={mode} debugValue={debugData} />;
