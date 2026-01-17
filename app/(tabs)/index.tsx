@@ -264,7 +264,7 @@ export default function HomeScreen() {
             </View>
 
             <View style={styles.statPill}>
-              <TouchableOpacity onPress={handleClearDataPress}>
+              <TouchableOpacity onPress={openSettings}>
                 <Ionicons name="settings-sharp" size={24} color="#666" />
               </TouchableOpacity>
             </View>
