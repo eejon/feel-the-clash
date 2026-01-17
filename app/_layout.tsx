@@ -28,6 +28,9 @@ export default function RootLayout() {
 
           {/* Pack Opening: Hides header, allows it to act as a separate page */}
           <Stack.Screen name="packOpening" options={{ headerShown: false }} />
+
+          {/* Settings */}
+          <Stack.Screen name="settings" options={{ headerShown: false }} />
         </Stack>
         <StatusBar style="auto" />
       </ThemeProvider>
