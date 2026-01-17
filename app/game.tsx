@@ -1,9 +1,20 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { View, StyleSheet, Alert, TouchableOpacity, Text, Modal } from 'react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { DeviceMotion } from 'expo-sensors';
 import { Audio } from 'expo-av';
 import { GameVisuals } from '@/components/GameVisuals';
+
+// --- VISION CAMERA & FACE DETECTOR IMPORTS ---
+import { 
+  Camera, 
+  useCameraDevice, 
+  useCameraPermission, 
+  useFrameProcessor,
+  runAtTargetFps 
+} from 'react-native-vision-camera';
+import { useRunOnJS } from 'react-native-worklets-core';
+import { useFaceDetector } from 'react-native-vision-camera-face-detector';
 
 // IMPORT STORAGE & DATA
 import { addPack, getPackCount, consumePack, addToCollection } from '@/utils/storage';
@@ -26,10 +37,28 @@ export default function GameScreen() {
   const recordingRef = useRef(null);
   const historyRef = useRef([]);
 
+  // --- CAMERA SETUP ---
+  const device = useCameraDevice('front');
+  const { hasPermission, requestPermission } = useCameraPermission();
+
+  // Initialize the Face Detector
+  const { detectFaces } = useFaceDetector({
+    performanceMode: 'fast',
+    landmarkMode: 'none',
+    classificationMode: 'all', // Required for smile probability
+  });
+
+  useEffect(() => {
+    // Auto-request permission if in smile mode
+    if (mode === 'smile' && !hasPermission) {
+      requestPermission();
+    }
+  }, [mode, hasPermission]);
+
   useFocusEffect(
     useCallback(() => {
       isActive.current = true;
-      refreshPacks(); // Load packs on entry
+      refreshPacks(); 
       startChallenge();
 
       return () => {
@@ -58,6 +87,7 @@ export default function GameScreen() {
     if (mode === 'shake') runShake();
     else if (mode === 'slap') runSlap();
     else if (mode === 'blow') runBlow();
+    // 'smile' logic runs automatically via the frame processor below
   };
 
   // === WIN LOGIC ===
@@ -77,7 +107,7 @@ export default function GameScreen() {
         text: "Play Again", 
         onPress: () => {
             isActive.current = true;
-            startChallenge(); // Restart game logic
+            startChallenge(); 
         }
       }, {
         text: "Back to Home",
@@ -93,11 +123,9 @@ export default function GameScreen() {
         return;
     }
 
-    // 1. Consume Pack
     const newCount = await consumePack();
     if (newCount !== false) setPackCount(newCount);
 
-    // 2. Randomize 5 Animals
     const newPull = [];
     const newIds = [];
     for(let i=0; i<5; i++) {
@@ -106,15 +134,36 @@ export default function GameScreen() {
         newIds.push(randomAnimal.id);
     }
 
-    // 3. Save to Collection
     await addToCollection(newIds);
-
-    // 4. Show Animation
     setPulledAnimals(newPull);
     setGachaVisible(true);
   };
 
-  // === SENSOR LOGIC BLOCKS (Same as before) ===
+  // === SMILE DETECTION LOGIC ===
+  
+  // Wrapper to allow the Worklet to call back to the main JS thread
+  const onSmileDetected = useRunOnJS((smileProb) => {
+      setDebugData({ smile: smileProb }); // Update Debug UI
+      // Threshold: 0.7 means 70% sure it's a smile
+      if (smileProb > 0.7 && isActive.current) {
+          handleWin();
+      }
+  }, []);
+
+  const frameProcessor = useFrameProcessor((frame) => {
+    'worklet';
+    // Only run this logic 5 times per second to save battery
+    runAtTargetFps(5, () => {
+        const faces = detectFaces(frame);
+
+        if (faces.length > 0) {
+            const smile = faces[0].smilingProbability || 0;
+            onSmileDetected(smile);
+        }
+    });
+  }, [detectFaces]); // Dependency is important!
+
+  // === SENSOR LOGIC BLOCKS ===
   const runShake = () => {
     DeviceMotion.setUpdateInterval(50);
     DeviceMotion.addListener(({ acceleration }) => {
@@ -167,21 +216,43 @@ export default function GameScreen() {
     } catch (e) {}
   };
 
+  // === RENDER HELPERS ===
+  const renderGameContent = () => {
+    // 1. SMILE MODE (Camera)
+    if (mode === 'smile') {
+       if (!hasPermission) return <Text style={{color:'#fff'}}>Requesting Camera...</Text>;
+       if (!device) return <Text style={{color:'#fff'}}>No Front Camera Found</Text>;
+
+       return (
+         <View style={{ flex: 1, width: '100%', borderRadius: 20, overflow: 'hidden' }}>
+            <Camera
+                style={StyleSheet.absoluteFill}
+                device={device}
+                isActive={isActive.current}
+                frameProcessor={frameProcessor}
+                pixelFormat="yuv"
+            />
+            {/* Overlay visuals on top of camera */}
+            <View style={styles.cameraOverlay}>
+                <GameVisuals mode={mode} debugValue={debugData} />
+            </View>
+         </View>
+       );
+    }
+
+    // 2. STANDARD MODES (Sensors)
+    return <GameVisuals mode={mode} debugValue={debugData} />;
+  };
+
   return (
     <View style={styles.container}>
-      {/* Top Bar */}
-      {/* <View style={styles.topBar}>
-        <TouchableOpacity style={styles.packBtn} onPress={openBoosterPack}>
-            <Text style={styles.packText}>📦 Packs: {packCount}</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.collectionBtn} onPress={() => router.push('/collection')}>
-            <Text style={styles.collectionText}>📖 Collection</Text>
-        </TouchableOpacity>
-      </View> */}
+      {/* Top Bar (Optional) */}
+      <View style={styles.topBar}>
+         {/* You can uncomment the pack/collection buttons if needed */}
+      </View>
 
       <View style={styles.card}>
-        <GameVisuals mode={mode} debugValue={debugData} />
+        {renderGameContent()}
       </View>
 
       <TouchableOpacity style={styles.cancelBtn} onPress={() => router.back()}>
@@ -213,15 +284,30 @@ export default function GameScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F7F2E8', padding: 20, paddingTop: 60 },
-  topBar: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
-  packBtn: { backgroundColor: '#3498db', padding: 10, borderRadius: 8 },
-  packText: { color: '#fff', fontWeight: 'bold' },
-  collectionBtn: { backgroundColor: '#9b59b6', padding: 10, borderRadius: 8 },
-  collectionText: { color: '#fff', fontWeight: 'bold' },
+  topBar: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20, height: 20 },
   
-  card: { flex: 1, backgroundColor: '#1a1a1a', borderRadius: 20, borderColor: '#333', borderWidth: 1, marginBottom: 20 },
+  card: { 
+    flex: 1, 
+    backgroundColor: '#1a1a1a', 
+    borderRadius: 20, 
+    borderColor: '#333', 
+    borderWidth: 1, 
+    marginBottom: 20,
+    overflow: 'hidden', // Ensures camera doesn't bleed out
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
   cancelBtn: { padding: 15, backgroundColor: '#333', borderRadius: 10, alignItems: 'center' },
   cancelText: { color: '#ff4d4d', fontWeight: 'bold' },
+
+  // Camera Overlay
+  cameraOverlay: { 
+    flex: 1, 
+    backgroundColor: 'rgba(0,0,0,0.3)', 
+    width: '100%', 
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
 
   // Modal Styles
   modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center' },
