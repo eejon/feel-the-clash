@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useRef } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Alert, Modal, FlatList, Animated, Easing, Image, ImageBackground, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, Alert, Modal, FlatList, Animated, Easing, Image, ImageBackground, TextInput, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,6 +10,9 @@ import { DeviceMotion } from 'expo-sensors';
 import { getPackCount, getCollection, clearStorage, addPack, feedPet, PetInstance } from '@/utils/storage';
 import { getAnimalById } from '@/constants/GameData';
 import { RARITY_COLORS } from '@/constants/PackOpeningConfig';
+
+// Get Screen Dimensions for boundaries
+const { width, height } = Dimensions.get('window');
 
 // --- PARTICLE COMPONENTS ---
 const FloatingEmoji = ({ emoji, onComplete, id }: { emoji: string, onComplete: (id: number) => void, id: number }) => {
@@ -38,16 +41,51 @@ export default function HomeScreen() {
   const [featuredPetInstance, setFeaturedPetInstance] = useState<PetInstance | null>(null);
   const [userCollection, setUserCollection] = useState<PetInstance[]>([]);
   const [swapModalVisible, setSwapModalVisible] = useState(false);
-  
+
   // 👇 NEW: Rename Modal State
   const [renameModalVisible, setRenameModalVisible] = useState(false);
   const [newName, setNewName] = useState('');
 
-  // --- ANIMATION & GAME STATE ---
+  // --- ANIMATION STATE ---
   const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  // 👇 NEW: Position Animation (X, Y)
+  const positionAnim = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+
   const [particles, setParticles] = useState<any[]>([]);
   const particleIdCounter = useRef(0);
   const [isHungry, setIsHungry] = useState(false);
+
+  // --- MOVEMENT LOGIC ---
+  useEffect(() => {
+    // Start the wandering loop
+    movePet();
+  }, []);
+
+  const movePet = () => {
+    // Define bounds relative to center (approx 30% of screen width, 15% of screen height)
+    const rangeX = width * 0.35;
+    const rangeY = height * 0.15;
+
+    // Random coordinates
+    const nextX = (Math.random() * rangeX * 2) - rangeX;
+    const nextY = (Math.random() * rangeY * 2) - rangeY;
+
+    Animated.sequence([
+      // 1. Wait a bit (idle)
+      Animated.delay(1000 + Math.random() * 2000),
+      // 2. Move to new spot
+      Animated.timing(positionAnim, {
+        toValue: { x: nextX, y: nextY },
+        duration: 2000 + Math.random() * 1500, // Slow, natural movement
+        easing: Easing.inOut(Easing.quad), // Smooth start/stop
+        useNativeDriver: true,
+      })
+    ]).start(() => {
+      // 3. Loop forever
+      movePet();
+    });
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -135,7 +173,6 @@ export default function HomeScreen() {
   const startChallenge = () => {
     // const modes = ['shake', 'slap', 'blow', 'smile']; 
     const modes = ['shake', 'slap', 'blow'];
-
     const randomMode = modes[Math.floor(Math.random() * modes.length)];
     router.push({ pathname: '/game', params: { mode: randomMode } });
   };
@@ -151,11 +188,11 @@ export default function HomeScreen() {
     checkHunger(pet);
     setSwapModalVisible(false);
   };
-
+  
   const openSettings = () => {
     router.push('/settings' as any);
   };
-  
+
   const handleClearDataPress = () => {
     Alert.alert(
       "Reset Game Data?",
@@ -174,7 +211,7 @@ export default function HomeScreen() {
     setUserCollection([]);
   };
 
-  // 👇 NEW: Helper to rename pet logic
+    // 👇 NEW: Helper to rename pet logic
   const onRenameBtnPress = () => {
     if (!featuredPetInstance) return;
     setNewName(featuredPetInstance.name); // Pre-fill current name
@@ -183,7 +220,7 @@ export default function HomeScreen() {
 
   const saveNewName = async () => {
     if (!featuredPetInstance || !newName.trim()) return;
-    
+
     // 1. Update Collection in Storage
     const updatedCollection = userCollection.map(pet => {
       if (pet.instanceId === featuredPetInstance.instanceId) {
@@ -218,9 +255,14 @@ export default function HomeScreen() {
               <Text style={styles.statEmoji}>📦</Text>
               <Text style={styles.statText}>{packCount}</Text>
             </View>
-            <View style={{ flex: 1, alignItems: 'center' }}>
-              <Text style={styles.appTitle}>GachaPets</Text>
+            <View style={[styles.statPill, { flex: 1, flexDirection: 'column', alignItems: 'center', marginHorizontal: 20 }]}>
+              <Text style={styles.hintText}>
+                {featuredPetInstance
+                  ? isHungry ? "(Shake phone to feed!)" : "(Tap to Love • Hold to Swap)"
+                  : "(Go earn some packs!)"}
+              </Text>
             </View>
+
             <View style={styles.statPill}>
               <TouchableOpacity onPress={handleClearDataPress}>
                 <Ionicons name="settings-sharp" size={24} color="#666" />
@@ -230,57 +272,67 @@ export default function HomeScreen() {
 
           {/* STAGE */}
           <View style={styles.stageContainer}>
-            <TouchableOpacity
-              activeOpacity={1}
-              onPress={handlePetPress}
-              onLongPress={() => setSwapModalVisible(true)}
+
+            {/* 👇 NEW: Wrapper View for Movement (Translate X/Y) */}
+            <Animated.View
+              style={{
+                alignItems: 'center',
+                transform: featuredPetInstance ? [
+                  { translateX: positionAnim.x },
+                  { translateY: positionAnim.y }
+                ] : [] // <--- If Egg (no pet), force position to 0,0
+              }}
             >
-              <Animated.View style={[
-                styles.petCircle,
-                { transform: [{ scale: scaleAnim }] },
-                isHungry && styles.petCircleHungry
-              ]}>
-                {featuredPetInstance && baseStats ? (
-                  <>
-                    {particles.map(p => (
-                      <FloatingEmoji key={p.id} id={p.id} emoji={p.emoji} onComplete={removeParticle} />
-                    ))}
-                    {baseStats && (
-                      <Text style={styles.petRarity}>{'⭐'.repeat(baseStats.rarity)}</Text>
-                    )}
-                    <Text style={styles.petName}>{featuredPetInstance.name}</Text>
-                    <Text style={styles.petAnimalName}>the {baseStats.name}</Text>
-
-                    <View style={[styles.cardImageContainer, { borderColor: rarityColor }]}>
-                      {baseStats.image ? (
-                        <Image source={baseStats.image} style={styles.cardImage} resizeMode="contain" />
-                      ) : (
-                        <Text style={styles.cardEmoji}>{baseStats.emoji}</Text>
+              <TouchableOpacity
+                activeOpacity={1}
+                onPress={handlePetPress}
+                onLongPress={() => setSwapModalVisible(true)}
+              >
+                {/* Pet Circle handles Scale Animation */}
+                <Animated.View style={[
+                  styles.petCircle,
+                  { transform: [{ scale: scaleAnim }] }
+                ]}>
+                  {featuredPetInstance && baseStats ? (
+                    <>
+                      {particles.map(p => (
+                        <FloatingEmoji key={p.id} id={p.id} emoji={p.emoji} onComplete={removeParticle} />
+                      ))}
+                      {baseStats && (
+                        <Text style={styles.petRarity}>{'⭐'.repeat(baseStats.rarity)}</Text>
                       )}
-                    </View>
-                    <View style={styles.speechBubble}>
-                      <Text style={styles.speechText}>
-                        {isHungry ? "Feed me! (Shake)" : "Tap me!"}
-                      </Text>
-                      <View style={styles.speechTail} />
-                    </View>
-                  </>
-                ) : (
-                  <View style={{ alignItems: 'center' }}>
-                    <Text style={styles.emptyText}>No pets yet...</Text>
-                    <Text style={{ fontSize: 50 }}>🥚</Text>
-                  </View>
-                )}
-              </Animated.View>
-            </TouchableOpacity>
+                      <Text style={styles.petName}>{featuredPetInstance.name}</Text>
+                      <Text style={styles.petAnimalName}>the {baseStats.name}</Text>
 
-            <View style={styles.shadow} />
+                      <View style={[styles.cardImageContainer, { borderColor: rarityColor }]}>
+                        {baseStats.image ? (
+                          <Image source={baseStats.image} style={styles.cardImage} resizeMode="contain" />
+                        ) : (
+                          <Text style={styles.cardEmoji}>{baseStats.emoji}</Text>
+                        )}
+                      </View>
+                      <View style={styles.speechBubble}>
+                        <Text style={styles.speechText}>
+                          {isHungry ? "Feed me! 🍖 (Shake)" : "Tap me!"}
+                        </Text>
+                        <View style={styles.speechTail} />
+                      </View>
+                    </>
+                  ) : (
+                    <View style={{ alignItems: 'center' }}>
+                      <Text style={styles.emptyText}>No pets yet...</Text>
+                      <Text style={{ fontSize: 50 }}>🥚</Text>
+                    </View>
+                  )}
+                </Animated.View>
+              </TouchableOpacity>
 
-            <Text style={styles.hintText}>
-              {featuredPetInstance
-                ? isHungry ? "(Shake phone to feed!)" : "(Tap to Love • Hold to Swap)"
-                : "(Go earn some packs!)"}
-            </Text>
+              {/* Shadow follows the pet */}
+              <View style={styles.shadow} />
+
+            </Animated.View>
+
+
           </View>
 
 
@@ -318,15 +370,15 @@ export default function HomeScreen() {
             </View>
           </Modal>
 
-          {/* 👇 NEW: RENAME MODAL */}
+          {/* RENAME MODAL */}
           <Modal visible={renameModalVisible} transparent animationType="fade">
-            <KeyboardAvoidingView 
+            <KeyboardAvoidingView
               behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
               style={styles.renameOverlay}
             >
               <View style={styles.renameCard}>
                 <Text style={styles.renameTitle}>Rename Pet</Text>
-                <TextInput 
+                <TextInput
                   style={styles.renameInput}
                   value={newName}
                   onChangeText={setNewName}
@@ -336,10 +388,10 @@ export default function HomeScreen() {
                 />
                 <View style={styles.renameBtnRow}>
                   <TouchableOpacity style={styles.renameCancel} onPress={() => setRenameModalVisible(false)}>
-                    <Text style={{color: '#999', fontWeight: 'bold'}}>Cancel</Text>
+                    <Text style={{ color: '#999', fontWeight: 'bold' }}>Cancel</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.renameSave} onPress={saveNewName}>
-                    <Text style={{color: '#000', fontWeight: 'bold'}}>Save</Text>
+                    <Text style={{ color: '#000', fontWeight: 'bold' }}>Save</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -391,14 +443,13 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  // ... (Existing styles unchanged)
   cardContainer: { width: 100, marginHorizontal: 5, alignItems: 'center' },
   cardImageContainer: { width: 128, height: 128, alignItems: 'center', justifyContent: 'center' },
   cardImage: { width: '80%', height: '80%' },
   cardEmoji: { fontSize: 40 },
   container: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 10 },
-  appTitle: { fontSize: 20, fontWeight: '900', color: '#333', letterSpacing: 1, alignItems: 'center' },
+  appTitle: { fontSize: 18, fontWeight: '900', color: '#333', letterSpacing: 1, alignItems: 'center' },
   statPill: { flexDirection: 'row', backgroundColor: '#fff', paddingHorizontal: 12, width: 70, height: 50, justifyContent: 'center', paddingVertical: 6, borderRadius: 20, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 5, elevation: 2, alignItems: 'center', gap: 5 },
   statText: { fontWeight: 'bold', fontSize: 16 },
   statEmoji: { fontSize: 16 },
@@ -411,15 +462,15 @@ const styles = StyleSheet.create({
   petAnimalName: { fontSize: 16, fontWeight: 'bold', color: '#FFF', shadowOpacity: 100 },
   petRarity: { fontSize: 14, marginTop: 12, letterSpacing: 2 },
   emptyText: { color: '#fff', marginTop: 10, fontWeight: '600', shadowOpacity: 100 },
-  hintText: { marginTop: 30, color: '#fff', fontSize: 14, fontWeight: '600', shadowOpacity: 100 },
+  hintText: { color: '#000', fontSize: 12, fontWeight: '600', },
   speechBubble: { position: 'absolute', top: -40, right: 0, backgroundColor: '#333', paddingVertical: 8, paddingHorizontal: 15, borderRadius: 15 },
   speechText: { color: '#fff', fontWeight: 'bold', fontSize: 12 },
   speechTail: { position: 'absolute', bottom: -6, left: 15, width: 0, height: 0, borderLeftWidth: 6, borderRightWidth: 6, borderTopWidth: 6, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: '#333' },
   bottomBar: { flex: 1, backgroundColor: '#fff', borderTopLeftRadius: 30, borderTopRightRadius: 30, padding: 25, paddingBottom: 40, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 10 },
-  largePlayBtn: { backgroundColor: '#4dff4d', borderRadius: 20, padding: 15, flexDirection: 'row', alignItems: 'center', marginBottom: 25, shadowColor: '#4dff4d', shadowOpacity: 0.4, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 },
+  largePlayBtn: { backgroundColor: '#F3E5AB', borderRadius: 20, padding: 15, flexDirection: 'row', alignItems: 'center', marginBottom: 25, shadowColor: '#98BAD6', shadowOpacity: 0.4, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 },
   playIconCircle: { width: 50, height: 50, backgroundColor: 'rgba(0,0,0,0.1)', borderRadius: 25, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
-  playBtnText: { fontSize: 20, fontWeight: '900', color: '#000' },
-  playBtnSub: { fontSize: 12, color: '#004d00', fontWeight: '600' },
+  playBtnText: { fontSize: 20, fontWeight: '900', color: '#fff' },
+  playBtnSub: { fontSize: 12, color: '#fff', fontWeight: '600' },
   actionRow: { flexDirection: 'row', justifyContent: 'space-around' },
   actionBtn: { alignItems: 'center' },
   iconBox: { width: 60, height: 60, borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginBottom: 8, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 5, elevation: 3 },
@@ -431,8 +482,6 @@ const styles = StyleSheet.create({
   swapCardSelected: { borderColor: '#4dff4d', backgroundColor: '#f0fff0' },
   swapName: { fontWeight: 'bold', fontSize: 16, color: '#333' },
   swapSpecies: { fontSize: 12, color: '#888', marginTop: 2 },
-
-  // 👇 NEW: Styles for Rename Modal
   renameOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center' },
   renameCard: { width: '80%', backgroundColor: '#fff', padding: 20, borderRadius: 20, alignItems: 'center' },
   renameTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 15, color: '#333' },
