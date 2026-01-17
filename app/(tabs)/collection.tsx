@@ -70,7 +70,7 @@ export default function CollectionScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000', paddingTop: 50 },
+  container: { flex: 1, backgroundColor: '#F7F2E8', paddingTop: 50 },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, marginBottom: 20 },
   backBtn: { marginRight: 15, padding: 5 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#fff' },

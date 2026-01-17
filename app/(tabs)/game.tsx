@@ -170,7 +170,7 @@ export default function GameScreen() {
   return (
     <View style={styles.container}>
       {/* Top Bar */}
-      <View style={styles.topBar}>
+      {/* <View style={styles.topBar}>
         <TouchableOpacity style={styles.packBtn} onPress={openBoosterPack}>
             <Text style={styles.packText}>📦 Packs: {packCount}</Text>
         </TouchableOpacity>
@@ -178,7 +178,7 @@ export default function GameScreen() {
         <TouchableOpacity style={styles.collectionBtn} onPress={() => router.push('/collection')}>
             <Text style={styles.collectionText}>📖 Collection</Text>
         </TouchableOpacity>
-      </View>
+      </View> */}
 
       <View style={styles.card}>
         <GameVisuals mode={mode} debugValue={debugData} />
@@ -212,7 +212,7 @@ export default function GameScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000', padding: 20, paddingTop: 60 },
+  container: { flex: 1, backgroundColor: '#F7F2E8', padding: 20, paddingTop: 60 },
   topBar: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
   packBtn: { backgroundColor: '#3498db', padding: 10, borderRadius: 8 },
   packText: { color: '#fff', fontWeight: 'bold' },

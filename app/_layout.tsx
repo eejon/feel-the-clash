@@ -15,8 +15,17 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
+        {/* Main Tabs */}
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        
+        {/* Helper Modal */}
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+
+        {/* Game Screen: Hides header because it has custom UI */}
+        <Stack.Screen name="game" options={{ headerShown: false }} />
+
+        {/* Pack Opening: Hides header, allows it to act as a separate page */}
+        <Stack.Screen name="pack-opening" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
