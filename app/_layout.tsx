@@ -31,6 +31,9 @@ export default function RootLayout() {
 
           {/* Settings */}
           <Stack.Screen name="settings" options={{ headerShown: false }} />
+
+          {/* Gacha Ball */}
+          <Stack.Screen name="gachaBall" options={{ headerShown: false }} />
         </Stack>
         <StatusBar style="auto" />
       </ThemeProvider>

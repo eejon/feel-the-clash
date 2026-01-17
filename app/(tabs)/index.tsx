@@ -171,10 +171,17 @@ export default function HomeScreen() {
   };
 
   const startChallenge = () => {
-    // const modes = ['shake', 'slap', 'blow', 'smile']; 
+    // Shake and blow now use gachaBall, slap stays in game
     const modes = ['shake', 'slap', 'blow'];
     const randomMode = modes[Math.floor(Math.random() * modes.length)];
-    router.push({ pathname: '/game', params: { mode: randomMode } });
+
+    if (randomMode === 'shake' || randomMode === 'blow') {
+      // Route to gacha ball with the specific mode
+      router.push({ pathname: '/gachaBall', params: { mode: randomMode } } as any);
+    } else {
+      // Slap still goes to the game screen
+      router.push({ pathname: '/game', params: { mode: randomMode } });
+    }
   };
 
   const handleOpenPack = () => {
@@ -405,7 +412,7 @@ export default function HomeScreen() {
       <View style={styles.bottomBar}>
         <TouchableOpacity style={styles.largePlayBtn} onPress={startChallenge}>
           <View style={styles.playIconCircle}>
-            <Ionicons name="play" size={32} color="#fff" style={{ marginLeft: 4 }} />
+            <Ionicons name="play" size={32} color="#2D5A4A" style={{ marginLeft: 4 }} />
           </View>
           <View>
             <Text style={styles.playBtnText}>Play a Random Game!</Text>
@@ -415,23 +422,22 @@ export default function HomeScreen() {
 
         <View style={styles.actionRow}>
           <TouchableOpacity style={styles.actionBtn} onPress={handleOpenPack}>
-            <View style={[styles.iconBox, { backgroundColor: '#3498db' }]}>
+            <View style={[styles.iconBox, { backgroundColor: '#A8D8EA' }]}>
               <Text style={{ fontSize: 24 }}>📦</Text>
             </View>
             <Text style={styles.actionLabel}>Open Pack</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionBtn} onPress={() => router.push('/collection')}>
-            <View style={[styles.iconBox, { backgroundColor: '#9b59b6' }]}>
+            <View style={[styles.iconBox, { backgroundColor: '#D4C1EC' }]}>
               <Text style={{ fontSize: 24 }}>📖</Text>
             </View>
             <Text style={styles.actionLabel}>Collection</Text>
           </TouchableOpacity>
 
-          {/* 👇 NEW: RENAME BUTTON ADDED HERE */}
           <TouchableOpacity style={styles.actionBtn} onPress={onRenameBtnPress}>
-            <View style={[styles.iconBox, { backgroundColor: '#f1c40f' }]}>
-              <Ionicons name="create-outline" size={28} color="black" />
+            <View style={[styles.iconBox, { backgroundColor: '#FFD6BA' }]}>
+              <Ionicons name="create-outline" size={28} color="#5D4037" />
             </View>
             <Text style={styles.actionLabel}>Rename Pet</Text>
           </TouchableOpacity>
@@ -466,15 +472,15 @@ const styles = StyleSheet.create({
   speechBubble: { position: 'absolute', top: -40, right: 0, backgroundColor: '#333', paddingVertical: 8, paddingHorizontal: 15, borderRadius: 15 },
   speechText: { color: '#fff', fontWeight: 'bold', fontSize: 12 },
   speechTail: { position: 'absolute', bottom: -6, left: 15, width: 0, height: 0, borderLeftWidth: 6, borderRightWidth: 6, borderTopWidth: 6, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: '#333' },
-  bottomBar: { flex: 1, backgroundColor: '#fff', borderTopLeftRadius: 30, borderTopRightRadius: 30, padding: 25, paddingBottom: 40, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 10 },
-  largePlayBtn: { backgroundColor: '#F3E5AB', borderRadius: 20, padding: 15, flexDirection: 'row', alignItems: 'center', marginBottom: 25, shadowColor: '#98BAD6', shadowOpacity: 0.4, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 },
-  playIconCircle: { width: 50, height: 50, backgroundColor: 'rgba(0,0,0,0.1)', borderRadius: 25, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
-  playBtnText: { fontSize: 20, fontWeight: '900', color: '#fff' },
-  playBtnSub: { fontSize: 12, color: '#fff', fontWeight: '600' },
+  bottomBar: { flex: 1, backgroundColor: '#FAF8F5', borderTopLeftRadius: 30, borderTopRightRadius: 30, padding: 25, paddingBottom: 40, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 15, elevation: 10 },
+  largePlayBtn: { backgroundColor: '#B8E0D2', borderRadius: 20, padding: 15, flexDirection: 'row', alignItems: 'center', marginBottom: 25, shadowColor: '#7EC8A3', shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 },
+  playIconCircle: { width: 50, height: 50, backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: 25, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
+  playBtnText: { fontSize: 20, fontWeight: '900', color: '#2D5A4A' },
+  playBtnSub: { fontSize: 12, color: '#3D7A6A', fontWeight: '600' },
   actionRow: { flexDirection: 'row', justifyContent: 'space-around' },
   actionBtn: { alignItems: 'center' },
-  iconBox: { width: 60, height: 60, borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginBottom: 8, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 5, elevation: 3 },
-  actionLabel: { fontWeight: '600', color: '#555', fontSize: 12 },
+  iconBox: { width: 60, height: 60, borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginBottom: 8, shadowColor: '#8B9DC3', shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 3 },
+  actionLabel: { fontWeight: '600', color: '#5D6D7E', fontSize: 12 },
   modalContainer: { flex: 2, backgroundColor: '#F9F9F9' },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#eee', backgroundColor: '#fff' },
   modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
