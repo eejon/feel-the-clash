@@ -4,7 +4,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DeviceMotion } from 'expo-sensors'; 
+import { DeviceMotion } from 'expo-sensors';
 
 // Data & Storage
 import { getPackCount, getCollection, clearStorage, addPack, feedPet, PetInstance } from '@/utils/storage';
@@ -40,32 +40,32 @@ export default function HomeScreen() {
 
   // --- ANIMATION & GAME STATE ---
   const scaleAnim = useRef(new Animated.Value(1)).current;
-  const [particles, setParticles] = useState<any[]>([]); 
+  const [particles, setParticles] = useState<any[]>([]);
   const particleIdCounter = useRef(0);
   const [isHungry, setIsHungry] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       loadData();
-      
+
       // === SHAKE DETECTION LISTENER ===
       DeviceMotion.setUpdateInterval(100);
       const subscription = DeviceMotion.addListener(({ acceleration }) => {
         const force = Math.sqrt(
-          (acceleration?.x || 0) ** 2 + 
-          (acceleration?.y || 0) ** 2 + 
+          (acceleration?.x || 0) ** 2 +
+          (acceleration?.y || 0) ** 2 +
           (acceleration?.z || 0) ** 2
         );
 
         if (force > 20) {
-            handleFeed();
+          handleFeed();
         }
       });
 
       return () => {
         subscription.remove();
       };
-    }, [featuredPetInstance]) 
+    }, [featuredPetInstance])
   );
 
   const loadData = async () => {
@@ -74,13 +74,13 @@ export default function HomeScreen() {
 
     const collection = await getCollection();
     setUserCollection(collection);
-    
+
     // Load Featured Pet
     let currentPet = null;
     if (collection.length > 0) {
       const savedInstanceId = await AsyncStorage.getItem('user_featured_pet_id_v2');
       currentPet = collection.find(p => p.instanceId === savedInstanceId);
-      
+
       if (!currentPet) {
         currentPet = collection[0];
         await AsyncStorage.setItem('user_featured_pet_id_v2', currentPet.instanceId);
@@ -94,13 +94,13 @@ export default function HomeScreen() {
 
   const checkHunger = (pet: PetInstance) => {
     if (!pet.lastFed) {
-        setIsHungry(true);
-        return;
+      setIsHungry(true);
+      return;
     }
     const hoursSinceFed = (Date.now() - pet.lastFed) / (1000 * 60 * 60);
     setIsHungry(hoursSinceFed > 4);
   };
-  
+
   const getBaseStats = (animalId: number) => getAnimalById(animalId);
 
   // --- ACTIONS ---
@@ -116,19 +116,19 @@ export default function HomeScreen() {
 
   const handlePetPress = async () => {
     if (!featuredPetInstance) return;
-    
+
     Animated.sequence([
-        Animated.timing(scaleAnim, { toValue: 0.9, duration: 50, useNativeDriver: true }),
-        Animated.spring(scaleAnim, { toValue: 1, friction: 3, useNativeDriver: true })
+      Animated.timing(scaleAnim, { toValue: 0.9, duration: 50, useNativeDriver: true }),
+      Animated.spring(scaleAnim, { toValue: 1, friction: 3, useNativeDriver: true })
     ]).start();
 
     spawnParticle('❤️');
 
     if (Math.random() < 0.01) {
-        await addPack(1);
-        const newCount = await getPackCount();
-        setPackCount(newCount);
-        Alert.alert("Lucky!", "Your pet found a Booster Pack!");
+      await addPack(1);
+      const newCount = await getPackCount();
+      setPackCount(newCount);
+      Alert.alert("Lucky!", "Your pet found a Booster Pack!");
     }
   };
 
@@ -136,31 +136,33 @@ export default function HomeScreen() {
     if (!featuredPetInstance) return;
 
     spawnParticle('🍖');
-    
+
     if (isHungry) {
-        setIsHungry(false);
-        const updatedList = await feedPet(featuredPetInstance.instanceId);
-        const updatedPet = updatedList.find(p => p.instanceId === featuredPetInstance.instanceId);
-        if (updatedPet) setFeaturedPetInstance(updatedPet);
-        
-        Animated.sequence([
-            Animated.timing(scaleAnim, { toValue: 1.2, duration: 150, useNativeDriver: true }),
-            Animated.spring(scaleAnim, { toValue: 1, friction: 3, useNativeDriver: true })
-        ]).start();
+      setIsHungry(false);
+      const updatedList = await feedPet(featuredPetInstance.instanceId);
+      const updatedPet = updatedList.find(p => p.instanceId === featuredPetInstance.instanceId);
+      if (updatedPet) setFeaturedPetInstance(updatedPet);
+
+      Animated.sequence([
+        Animated.timing(scaleAnim, { toValue: 1.2, duration: 150, useNativeDriver: true }),
+        Animated.spring(scaleAnim, { toValue: 1, friction: 3, useNativeDriver: true })
+      ]).start();
     }
   };
 
   // 👇 UPDATED: Added 'smile' to the modes array!
   const startChallenge = () => {
-    const modes = ['shake', 'slap', 'blow', 'smile']; 
+    // const modes = ['shake', 'slap', 'blow', 'smile']; 
+    const modes = ['shake', 'slap', 'blow'];
+
     const randomMode = modes[Math.floor(Math.random() * modes.length)];
     router.push({ pathname: '/game', params: { mode: randomMode } });
   };
 
   const handleOpenPack = () => {
     if (packCount <= 0) {
-        Alert.alert("No Packs", "Play games to earn packs!");
-        return;
+      Alert.alert("No Packs", "Play games to earn packs!");
+      return;
     }
     router.push('/packOpening');
   };
@@ -171,19 +173,19 @@ export default function HomeScreen() {
     checkHunger(pet);
     setSwapModalVisible(false);
   };
-  
+
   const clearAllData = async () => {
-      await clearStorage();
-      setPackCount(0);
-      setFeaturedPetInstance(null);
-      setUserCollection([]);
+    await clearStorage();
+    setPackCount(0);
+    setFeaturedPetInstance(null);
+    setUserCollection([]);
   };
 
   const baseStats = featuredPetInstance ? getBaseStats(featuredPetInstance.animalId) : null;
 
   return (
     <SafeAreaView style={styles.container}>
-      
+
       {/* HEADER */}
       <View style={styles.header}>
         <View style={styles.statPill}>
@@ -192,59 +194,59 @@ export default function HomeScreen() {
         </View>
         <Text style={styles.appTitle}>GachaPets</Text>
         <TouchableOpacity onPress={clearAllData}>
-           <Ionicons name="settings-sharp" size={24} color="#666" />
+          <Ionicons name="settings-sharp" size={24} color="#666" />
         </TouchableOpacity>
       </View>
 
       {/* STAGE */}
       <View style={styles.stageContainer}>
-        <TouchableOpacity 
-            activeOpacity={1} 
-            onPress={handlePetPress}
-            onLongPress={() => setSwapModalVisible(true)}
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={handlePetPress}
+          onLongPress={() => setSwapModalVisible(true)}
         >
-            <Animated.View style={[
-                styles.petCircle, 
-                { transform: [{ scale: scaleAnim }] },
-                isHungry && styles.petCircleHungry 
-            ]}>
-                {featuredPetInstance && baseStats ? (
-                    <>
-                        {particles.map(p => (
-                            <FloatingEmoji key={p.id} id={p.id} emoji={p.emoji} onComplete={removeParticle} />
-                        ))}
+          <Animated.View style={[
+            styles.petCircle,
+            { transform: [{ scale: scaleAnim }] },
+            isHungry && styles.petCircleHungry
+          ]}>
+            {featuredPetInstance && baseStats ? (
+              <>
+                {particles.map(p => (
+                  <FloatingEmoji key={p.id} id={p.id} emoji={p.emoji} onComplete={removeParticle} />
+                ))}
 
-                        <Text style={[styles.petEmoji, isHungry && { opacity: 0.5 }]}>
-                            {baseStats.id === 1 ? '🐶' : '🐾'}
-                        </Text>
-                        
-                        <Text style={styles.petName}>{featuredPetInstance.name}</Text>
-                        <Text style={styles.petAnimalName}>{baseStats.name}</Text>
+                <Text style={[styles.petEmoji, isHungry && { opacity: 0.5 }]}>
+                  {baseStats.id === 1 ? '🐶' : '🐾'}
+                </Text>
 
-                        <Text style={styles.petRarity}>{'⭐'.repeat(baseStats.rarity)}</Text>
-                        
-                        <View style={styles.speechBubble}>
-                            <Text style={styles.speechText}>
-                                {isHungry ? "Feed me! (Shake)" : "Tap me!"}
-                            </Text>
-                            <View style={styles.speechTail} />
-                        </View>
-                    </>
-                ) : (
-                    <View style={{alignItems:'center'}}>
-                        <Text style={{fontSize: 50, opacity: 0.3}}>🥚</Text>
-                        <Text style={styles.emptyText}>No pets yet...</Text>
-                    </View>
-                )}
-            </Animated.View>
+                <Text style={styles.petName}>{featuredPetInstance.name}</Text>
+                <Text style={styles.petAnimalName}>{baseStats.name}</Text>
+
+                <Text style={styles.petRarity}>{'⭐'.repeat(baseStats.rarity)}</Text>
+
+                <View style={styles.speechBubble}>
+                  <Text style={styles.speechText}>
+                    {isHungry ? "Feed me! (Shake)" : "Tap me!"}
+                  </Text>
+                  <View style={styles.speechTail} />
+                </View>
+              </>
+            ) : (
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{ fontSize: 50, opacity: 0.3 }}>🥚</Text>
+                <Text style={styles.emptyText}>No pets yet...</Text>
+              </View>
+            )}
+          </Animated.View>
         </TouchableOpacity>
-        
+
         <View style={styles.shadow} />
-        
+
         <Text style={styles.hintText}>
-            {featuredPetInstance 
-                ? isHungry ? "(Shake phone to feed!)" : "(Tap to Love • Hold to Swap)" 
-                : "(Go earn some packs!)"}
+          {featuredPetInstance
+            ? isHungry ? "(Shake phone to feed!)" : "(Tap to Love • Hold to Swap)"
+            : "(Go earn some packs!)"}
         </Text>
       </View>
 
@@ -252,7 +254,7 @@ export default function HomeScreen() {
       <View style={styles.bottomBar}>
         <TouchableOpacity style={styles.largePlayBtn} onPress={startChallenge}>
           <View style={styles.playIconCircle}>
-             <Ionicons name="play" size={32} color="#fff" style={{marginLeft: 4}}/>
+            <Ionicons name="play" size={32} color="#fff" style={{ marginLeft: 4 }} />
           </View>
           <View>
             <Text style={styles.playBtnText}>Play a Random Game!</Text>
@@ -261,53 +263,53 @@ export default function HomeScreen() {
         </TouchableOpacity>
 
         <View style={styles.actionRow}>
-            <TouchableOpacity style={styles.actionBtn} onPress={handleOpenPack}>
-                <View style={[styles.iconBox, {backgroundColor: '#3498db'}]}>
-                    <Text style={{fontSize: 24}}>📦</Text>
-                </View>
-                <Text style={styles.actionLabel}>Open Pack</Text>
-            </TouchableOpacity>
+          <TouchableOpacity style={styles.actionBtn} onPress={handleOpenPack}>
+            <View style={[styles.iconBox, { backgroundColor: '#3498db' }]}>
+              <Text style={{ fontSize: 24 }}>📦</Text>
+            </View>
+            <Text style={styles.actionLabel}>Open Pack</Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity style={styles.actionBtn} onPress={() => router.push('/collection')}>
-                <View style={[styles.iconBox, {backgroundColor: '#9b59b6'}]}>
-                    <Text style={{fontSize: 24}}>📖</Text>
-                </View>
-                <Text style={styles.actionLabel}>Collection</Text>
-            </TouchableOpacity>
+          <TouchableOpacity style={styles.actionBtn} onPress={() => router.push('/collection')}>
+            <View style={[styles.iconBox, { backgroundColor: '#9b59b6' }]}>
+              <Text style={{ fontSize: 24 }}>📖</Text>
+            </View>
+            <Text style={styles.actionLabel}>Collection</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
       {/* SWAP MODAL */}
       <Modal visible={swapModalVisible} animationType="slide" presentationStyle="pageSheet">
         <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Companions</Text>
-                <TouchableOpacity onPress={() => setSwapModalVisible(false)}>
-                    <Ionicons name="close-circle" size={30} color="#ccc" />
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Companions</Text>
+            <TouchableOpacity onPress={() => setSwapModalVisible(false)}>
+              <Ionicons name="close-circle" size={30} color="#ccc" />
+            </TouchableOpacity>
+          </View>
+          <FlatList
+            data={userCollection}
+            keyExtractor={item => item.instanceId}
+            contentContainerStyle={{ padding: 20 }}
+            renderItem={({ item }) => {
+              const stats = getBaseStats(item.animalId);
+              const isSelected = featuredPetInstance?.instanceId === item.instanceId;
+              return (
+                <TouchableOpacity
+                  style={[styles.swapCard, isSelected && styles.swapCardSelected]}
+                  onPress={() => handleSwapPet(item)}
+                >
+                  <Text style={{ fontSize: 30, marginRight: 15 }}>🐾</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.swapName}>{item.name}</Text>
+                    <Text style={styles.swapSpecies}>{stats?.name}</Text>
+                  </View>
+                  {isSelected && <Ionicons name="checkmark-circle" size={24} color="#4dff4d" />}
                 </TouchableOpacity>
-            </View>
-            <FlatList 
-                data={userCollection}
-                keyExtractor={item => item.instanceId}
-                contentContainerStyle={{padding: 20}}
-                renderItem={({item}) => {
-                    const stats = getBaseStats(item.animalId);
-                    const isSelected = featuredPetInstance?.instanceId === item.instanceId;
-                    return (
-                        <TouchableOpacity 
-                            style={[styles.swapCard, isSelected && styles.swapCardSelected]} 
-                            onPress={() => handleSwapPet(item)}
-                        >
-                            <Text style={{fontSize: 30, marginRight: 15}}>🐾</Text>
-                            <View style={{flex: 1}}>
-                                <Text style={styles.swapName}>{item.name}</Text>
-                                <Text style={styles.swapSpecies}>{stats?.name}</Text>
-                            </View>
-                            {isSelected && <Ionicons name="checkmark-circle" size={24} color="#4dff4d" />}
-                        </TouchableOpacity>
-                    );
-                }}
-            />
+              );
+            }}
+          />
         </View>
       </Modal>
 
@@ -325,8 +327,8 @@ const styles = StyleSheet.create({
 
   stageContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', marginBottom: 50 },
   petCircle: { width: 260, height: 260, borderRadius: 130, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', borderWidth: 8, borderColor: '#e1e5eb', zIndex: 2, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 20, elevation: 10 },
-  petCircleHungry: { borderColor: '#ff9f43', borderWidth: 8 }, 
-  
+  petCircleHungry: { borderColor: '#ff9f43', borderWidth: 8 },
+
   shadow: { width: 20, height: 20, backgroundColor: 'rgba(0,0,0,0.05)', borderRadius: 10, marginTop: -20, zIndex: 1, transform: [{ scaleX: 10 }] },
   petEmoji: { fontSize: 80, marginBottom: 10 },
   petName: { fontSize: 28, fontWeight: 'bold', color: '#333' },
@@ -340,7 +342,7 @@ const styles = StyleSheet.create({
   speechTail: { position: 'absolute', bottom: -6, left: 15, width: 0, height: 0, borderLeftWidth: 6, borderRightWidth: 6, borderTopWidth: 6, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: '#333' },
 
   bottomBar: { backgroundColor: '#fff', borderTopLeftRadius: 30, borderTopRightRadius: 30, padding: 25, paddingBottom: 40, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 10 },
-  largePlayBtn: { backgroundColor: '#4dff4d', borderRadius: 20, padding: 15, flexDirection: 'row', alignItems: 'center', marginBottom: 25, shadowColor: '#4dff4d', shadowOpacity: 0.4, shadowRadius: 10, shadowOffset: {width: 0, height: 4}, elevation: 5 },
+  largePlayBtn: { backgroundColor: '#4dff4d', borderRadius: 20, padding: 15, flexDirection: 'row', alignItems: 'center', marginBottom: 25, shadowColor: '#4dff4d', shadowOpacity: 0.4, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 },
   playIconCircle: { width: 50, height: 50, backgroundColor: 'rgba(0,0,0,0.1)', borderRadius: 25, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
   playBtnText: { fontSize: 20, fontWeight: '900', color: '#000' },
   playBtnSub: { fontSize: 12, color: '#004d00', fontWeight: '600' },
