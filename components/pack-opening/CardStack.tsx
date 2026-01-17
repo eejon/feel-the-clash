@@ -59,9 +59,9 @@ function AnimatedCard({
     if (shouldAnimate) {
       const delay = index * TIMING.CASCADE_DELAY;
 
-      // Haptic feedback
+      // Haptic feedback - medium impact for each card
       const hapticTimer = setTimeout(() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }, delay);
 
       // Animate in

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,30 +12,31 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withSpring,
   withSequence,
-  Easing,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
-import { CardStack } from '@/components/pack-opening';
+import {
+  CardStack,
+  PackTearZone,
+  AmbientParticles,
+  ScreenFlash,
+  ScreenFlashRef,
+} from '@/components/pack-opening';
 import { consumePack, addPetsToCollection, PetInstance } from '@/utils/storage';
 import { getRandomAnimal, getAnimalById } from '@/constants/GameData';
-import { PackOpeningPhase, CARD_COUNT } from '@/constants/PackOpeningConfig';
+import { PackOpeningPhase, CARD_COUNT, RARITY_COLORS } from '@/constants/PackOpeningConfig';
 
 export default function PackOpeningScreen() {
   const router = useRouter();
+  const screenFlashRef = useRef<ScreenFlashRef>(null);
 
   // State machine
   const [phase, setPhase] = useState<PackOpeningPhase>('IDLE');
   const [pulledPets, setPulledPets] = useState<PetInstance[]>([]);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
-
-  // Pack animation values
-  const packScale = useSharedValue(1);
-  const packRotation = useSharedValue(0);
-  const packOpacity = useSharedValue(1);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Screen shake for legendary
   const screenShakeX = useSharedValue(0);
@@ -69,31 +70,16 @@ export default function PackOpeningScreen() {
     // Save immediately
     await addPetsToCollection(newInstances);
     setPulledPets(newInstances);
+    setIsLoading(false);
   };
 
-  // Handle pack tap to start opening
-  const handlePackTap = useCallback(() => {
-    if (phase !== 'IDLE') return;
-
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-
-    // Animate pack opening
-    packScale.value = withSequence(
-      withSpring(1.1, { damping: 8 }),
-      withTiming(0.8, { duration: 200 }),
-      withTiming(0, { duration: 300 })
-    );
-    packRotation.value = withTiming(15, {
-      duration: 400,
-      easing: Easing.out(Easing.quad),
-    });
-    packOpacity.value = withTiming(0, { duration: 400 });
-
-    // Transition to cascade phase
+  // Handle pack tear complete
+  const handleTearComplete = useCallback(() => {
+    // Small delay for the tear animation to finish visually
     setTimeout(() => {
       setPhase('CASCADE');
-    }, 500);
-  }, [phase]);
+    }, 200);
+  }, []);
 
   // Handle cascade complete
   const handleCascadeComplete = useCallback(() => {
@@ -109,11 +95,24 @@ export default function PackOpeningScreen() {
         return newSet;
       });
 
-      // Check for legendary and trigger screen shake
+      // Check for rare cards and trigger effects
       const pet = pulledPets[index];
       const animal = pet ? getAnimalById(pet.animalId) : null;
-      if (animal?.rarity === 5) {
-        triggerScreenShake();
+
+      if (animal) {
+        // Screen flash for rare cards (rarity 4+)
+        if (animal.rarity >= 4) {
+          setTimeout(() => {
+            screenFlashRef.current?.flash(RARITY_COLORS[animal.rarity]);
+          }, 250); // Delay to sync with flip
+        }
+
+        // Screen shake for legendary (rarity 5)
+        if (animal.rarity === 5) {
+          setTimeout(() => {
+            triggerScreenShake();
+          }, 300);
+        }
       }
     },
     [pulledPets]
@@ -132,26 +131,19 @@ export default function PackOpeningScreen() {
   // Screen shake for legendary reveals
   const triggerScreenShake = () => {
     const shakeAnimation = withSequence(
-      withTiming(4, { duration: 40 }),
-      withTiming(-4, { duration: 40 }),
-      withTiming(3, { duration: 40 }),
-      withTiming(-3, { duration: 40 }),
-      withTiming(2, { duration: 40 }),
-      withTiming(-2, { duration: 40 }),
-      withTiming(0, { duration: 40 })
+      withTiming(5, { duration: 30 }),
+      withTiming(-5, { duration: 30 }),
+      withTiming(4, { duration: 30 }),
+      withTiming(-4, { duration: 30 }),
+      withTiming(3, { duration: 30 }),
+      withTiming(-3, { duration: 30 }),
+      withTiming(2, { duration: 30 }),
+      withTiming(-2, { duration: 30 }),
+      withTiming(0, { duration: 30 })
     );
     screenShakeX.value = shakeAnimation;
     screenShakeY.value = shakeAnimation;
   };
-
-  // Animated styles
-  const packStyle = useAnimatedStyle(() => ({
-    transform: [
-      { scale: packScale.value },
-      { rotate: `${packRotation.value}deg` },
-    ],
-    opacity: packOpacity.value,
-  }));
 
   const screenShakeStyle = useAnimatedStyle(() => ({
     transform: [
@@ -166,37 +158,47 @@ export default function PackOpeningScreen() {
     router.back();
   };
 
+  // Get header text based on phase
+  const getHeaderText = () => {
+    if (isLoading) return 'Preparing pack...';
+    switch (phase) {
+      case 'IDLE':
+        return 'Tear it open!';
+      case 'CASCADE':
+        return 'Here they come...';
+      case 'REVEALING':
+        return 'Tap to reveal!';
+      case 'COMPLETE':
+        return 'All Revealed!';
+      default:
+        return '';
+    }
+  };
+
   return (
     <Animated.View style={[styles.outerContainer, screenShakeStyle]}>
+      {/* Ambient floating particles */}
+      {(phase === 'CASCADE' || phase === 'REVEALING') && (
+        <AmbientParticles count={25} color="rgba(255, 215, 0, 0.6)" />
+      )}
+
+      {/* Screen flash effect */}
+      <ScreenFlash ref={screenFlashRef} />
+
       <SafeAreaView style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerText}>
-            {phase === 'IDLE' && 'Tap to Open!'}
-            {phase === 'CASCADE' && 'Here they come...'}
-            {phase === 'REVEALING' && 'Tap cards to reveal!'}
-            {phase === 'COMPLETE' && 'All Revealed!'}
-          </Text>
+          <Text style={styles.headerText}>{getHeaderText()}</Text>
         </View>
 
         {/* Content area */}
         <View style={styles.content}>
-          {/* Pack (shown in IDLE phase) */}
+          {/* Pack Tear Zone (shown in IDLE phase) */}
           {phase === 'IDLE' && (
-            <TouchableOpacity
-              onPress={handlePackTap}
-              activeOpacity={0.9}
-              disabled={pulledPets.length === 0}
-            >
-              <Animated.View style={[styles.packContainer, packStyle]}>
-                <View style={styles.pack}>
-                  <Text style={styles.packEmoji}>📦</Text>
-                  <Text style={styles.packText}>
-                    {pulledPets.length > 0 ? 'TAP TO OPEN' : 'Loading...'}
-                  </Text>
-                </View>
-              </Animated.View>
-            </TouchableOpacity>
+            <PackTearZone
+              onTearComplete={handleTearComplete}
+              disabled={isLoading}
+            />
           )}
 
           {/* Card Stack (shown in CASCADE and REVEALING phases) */}
@@ -258,36 +260,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  // Pack styles
-  packContainer: {
-    alignItems: 'center',
-  },
-  pack: {
-    width: 200,
-    height: 260,
-    backgroundColor: '#1a1a2e',
-    borderRadius: 20,
-    borderWidth: 4,
-    borderColor: '#ffd700',
-    alignItems: 'center',
-    justifyContent: 'center',
-    // Shadow
-    shadowColor: '#ffd700',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
-    elevation: 15,
-  },
-  packEmoji: {
-    fontSize: 80,
-    marginBottom: 20,
-  },
-  packText: {
-    color: '#ffd700',
-    fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: 2,
   },
   // Complete styles
   completeContainer: {
