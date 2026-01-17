@@ -174,11 +174,8 @@ export default function HomeScreen() {
     setSwapModalVisible(false);
   };
 
-  const clearAllData = async () => {
-    await clearStorage();
-    setPackCount(0);
-    setFeaturedPetInstance(null);
-    setUserCollection([]);
+  const openSettings = () => {
+    router.push('/settings' as any);
   };
 
   const baseStats = featuredPetInstance ? getBaseStats(featuredPetInstance.animalId) : null;
@@ -193,7 +190,7 @@ export default function HomeScreen() {
           <Text style={styles.statText}>{packCount}</Text>
         </View>
         <Text style={styles.appTitle}>GachaPets</Text>
-        <TouchableOpacity onPress={clearAllData}>
+        <TouchableOpacity onPress={openSettings}>
           <Ionicons name="settings-sharp" size={24} color="#666" />
         </TouchableOpacity>
       </View>
