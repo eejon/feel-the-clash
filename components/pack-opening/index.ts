@@ -4,3 +4,4 @@ export { FlipCard } from './FlipCard';
 export { CardStack } from './CardStack';
 export { RareEffects } from './RareEffects';
 export { Sparkles } from './Sparkles';
+export { PackTearZone } from './PackTearZone';

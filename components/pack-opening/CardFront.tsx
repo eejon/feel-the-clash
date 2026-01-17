@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Text } from 'react-native';
+import { View, StyleSheet, Text, Image } from 'react-native';
 import { CARD_WIDTH, CARD_HEIGHT, RARITY_COLORS } from '@/constants/PackOpeningConfig';
 import type { PetInstance } from '@/utils/storage';
 
@@ -10,6 +10,7 @@ interface CardFrontProps {
     name: string;
     rarity: number;
     emoji?: string;
+    image?: any;
   };
 }
 
@@ -28,7 +29,14 @@ export function CardFront({ pet, baseAnimal }: CardFrontProps) {
       <View style={styles.content}>
         {/* Pet emoji - large and centered */}
         <View style={styles.emojiContainer}>
-          <Text style={styles.emoji}>{baseAnimal.emoji || '🐾'}</Text>
+          {baseAnimal.image ? (
+            <Image
+              source={baseAnimal.image}
+              style={{ width: 100, height: 100, resizeMode: 'contain' }}
+            />
+          ) : (
+            <Text style={styles.emoji}>{baseAnimal.emoji || '🐾'}</Text>
+          )}
         </View>
 
         {/* Name plate */}
