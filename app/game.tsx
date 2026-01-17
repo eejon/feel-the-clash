@@ -42,11 +42,11 @@ export default function GameScreen() {
   // const { hasPermission, requestPermission } = useCameraPermission();
 
   // Initialize the Face Detector
-  const { detectFaces } = useFaceDetector({
-    performanceMode: 'fast',
-    landmarkMode: 'none',
-    classificationMode: 'all', // Required for smile probability
-  });
+  // const { detectFaces } = useFaceDetector({
+  //   performanceMode: 'fast',
+  //   landmarkMode: 'none',
+  //   classificationMode: 'all', // Required for smile probability
+  // });
 
   // useEffect(() => {
   //   // Auto-request permission if in smile mode
@@ -234,6 +234,9 @@ export default function GameScreen() {
     //         />
     //         {/* Overlay visuals on top of camera */}
     //         <View style={styles.cameraOverlay}>
+    //             {/* 👇 NEW INSTRUCTION TEXT */}
+    //             <Text style={styles.smileInstruction}>😁 SMILE! 😁</Text>
+
     //             <GameVisuals mode={mode} debugValue={debugData} />
     //         </View>
     //      </View>
@@ -307,6 +310,21 @@ const styles = StyleSheet.create({
     width: '100%', 
     justifyContent: 'center', 
     alignItems: 'center' 
+  },
+  
+  // 👇 NEW STYLE FOR THE SMILE TEXT
+  smileInstruction: {
+    position: 'absolute',
+    top: 60,
+    fontSize: 36,
+    fontWeight: '900',
+    color: '#FFD700', // Gold color
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 5,
+    zIndex: 100, // Ensure it sits on top of everything
+    textAlign: 'center',
+    width: '100%',
   },
 
   // Modal Styles
