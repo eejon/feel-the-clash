@@ -70,16 +70,28 @@ export function FlipCard({
   // Effects for this rarity
   const effects = RARITY_EFFECTS[baseAnimal.rarity] || RARITY_EFFECTS[1];
 
+  // Get flip duration based on rarity - slower for rare cards
+  const getFlipDuration = () => {
+    switch (baseAnimal.rarity) {
+      case 5: return 1200;  // Legendary - very dramatic
+      case 4: return 1200;  // Epic - dramatic
+      case 3: return 900;  // Rare - slightly slower
+      default: return TIMING.FLIP_DURATION; // Common - normal speed
+    }
+  };
+
   // Handle flip action
   const handleFlip = () => {
     if (isFlipped || !isTopCard) return;
+
+    const flipDuration = getFlipDuration();
 
     // Strong haptic on flip
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
 
     rotateY.value = withTiming(180, {
-      duration: TIMING.FLIP_DURATION,
-      easing: Easing.out(Easing.back(1.5)),
+      duration: flipDuration,
+      easing: Easing.out(Easing.back(1.2)), // Slightly less overshoot for slower flips
     });
 
     onFlip();
@@ -88,15 +100,15 @@ export function FlipCard({
     if (baseAnimal.rarity >= 4) {
       setTimeout(() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-      }, TIMING.FLIP_DURATION * 0.4);
+      }, flipDuration * 0.4);
       setTimeout(() => {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }, TIMING.FLIP_DURATION * 0.6);
+      }, flipDuration * 0.6);
       if (baseAnimal.rarity === 5) {
         // Extra burst for legendary
         setTimeout(() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-        }, TIMING.FLIP_DURATION * 0.8);
+        }, flipDuration * 0.8);
       }
     }
   };

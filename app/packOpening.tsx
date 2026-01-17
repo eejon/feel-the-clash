@@ -26,6 +26,12 @@ import {
 import { consumePack, addPetsToCollection, PetInstance } from '@/utils/storage';
 import { getRandomAnimal, getAnimalById } from '@/constants/GameData';
 import { PackOpeningPhase, CARD_COUNT, RARITY_COLORS } from '@/constants/PackOpeningConfig';
+import {
+  preloadPackOpeningSounds,
+  playPackOpenSound,
+  playRevealSound,
+  unloadPackOpeningSounds,
+} from '@/utils/sounds';
 
 export default function PackOpeningScreen() {
   const router = useRouter();
@@ -42,8 +48,15 @@ export default function PackOpeningScreen() {
   const screenShakeX = useSharedValue(0);
   const screenShakeY = useSharedValue(0);
 
+  // Preload sounds and open pack on mount
   useEffect(() => {
+    preloadPackOpeningSounds();
     openPack();
+
+    // Cleanup sounds on unmount
+    return () => {
+      unloadPackOpeningSounds();
+    };
   }, []);
 
   const openPack = async () => {
@@ -75,6 +88,9 @@ export default function PackOpeningScreen() {
 
   // Handle pack tear complete
   const handleTearComplete = useCallback(() => {
+    // Play pack open sound
+    playPackOpenSound();
+
     // Small delay for the tear animation to finish visually
     setTimeout(() => {
       setPhase('CASCADE');
@@ -100,11 +116,16 @@ export default function PackOpeningScreen() {
       const animal = pet ? getAnimalById(pet.animalId) : null;
 
       if (animal) {
+        // Play reveal sound based on rarity (all cards)
+        setTimeout(() => {
+          playRevealSound(animal.rarity);
+        }, 200); // Sync with flip animation
+
         // Screen flash for rare cards (rarity 4+)
         if (animal.rarity >= 4) {
           setTimeout(() => {
             screenFlashRef.current?.flash(RARITY_COLORS[animal.rarity]);
-          }, 250); // Delay to sync with flip
+          }, 250);
         }
 
         // Screen shake for legendary (rarity 5)

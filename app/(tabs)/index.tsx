@@ -152,6 +152,10 @@ export default function HomeScreen() {
     setSwapModalVisible(false);
   };
 
+  const openSettings = () => {
+    router.push('/settings' as any);
+  };
+  
   const handleClearDataPress = () => {
     Alert.alert(
       "Reset Game Data?",
