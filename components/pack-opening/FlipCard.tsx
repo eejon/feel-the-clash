@@ -15,6 +15,8 @@ import * as Haptics from 'expo-haptics';
 import { CardBack } from './CardBack';
 import { CardFront } from './CardFront';
 import { RareEffects } from './RareEffects';
+import { CardShine } from './CardShine';
+import { RARITY_COLORS } from '@/constants/PackOpeningConfig';
 import {
   CARD_WIDTH,
   CARD_HEIGHT,
@@ -72,7 +74,8 @@ export function FlipCard({
   const handleFlip = () => {
     if (isFlipped || !isTopCard) return;
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    // Strong haptic on flip
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
 
     rotateY.value = withTiming(180, {
       duration: TIMING.FLIP_DURATION,
@@ -81,30 +84,57 @@ export function FlipCard({
 
     onFlip();
 
-    // Extra haptic for rare cards
+    // Extra haptic burst for rare cards
     if (baseAnimal.rarity >= 4) {
+      setTimeout(() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      }, TIMING.FLIP_DURATION * 0.4);
       setTimeout(() => {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }, TIMING.FLIP_DURATION * 0.6);
+      if (baseAnimal.rarity === 5) {
+        // Extra burst for legendary
+        setTimeout(() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+        }, TIMING.FLIP_DURATION * 0.8);
+      }
     }
   };
 
-  // Handle dismiss action
+  // Handle dismiss action (animate out then callback)
   const handleDismiss = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    onDismiss();
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    // Animate out
+    dismissY.value = withTiming(-600, { duration: TIMING.DISMISS_DURATION });
+    dismissOpacity.value = withTiming(0, { duration: TIMING.DISMISS_DURATION });
+    // Callback after animation starts
+    setTimeout(() => {
+      onDismiss();
+    }, 50);
   };
 
-  // Tap gesture for flipping
+  // Handle tap - either flip or dismiss depending on state
+  const handleTap = () => {
+    if (!isTopCard) return;
+
+    if (!isFlipped) {
+      handleFlip();
+    } else {
+      handleDismiss();
+    }
+  };
+
+  // Tap gesture - flip if not flipped, dismiss if flipped
   const tapGesture = Gesture.Tap()
-    .enabled(isTopCard && !isFlipped)
+    .enabled(isTopCard)
     .onEnd(() => {
-      runOnJS(handleFlip)();
+      runOnJS(handleTap)();
     });
 
-  // Pan gesture for dismissing (swipe up)
+  // Pan gesture for dismissing (swipe up) - only when flipped
   const panGesture = Gesture.Pan()
     .enabled(isTopCard && isFlipped)
+    .minDistance(10) // Require some movement to activate pan
     .onUpdate((event) => {
       // Only allow upward swipe
       if (event.translationY < 0) {
@@ -127,10 +157,11 @@ export function FlipCard({
         event.velocityY < -THRESHOLDS.DISMISS_VELOCITY;
 
       if (shouldDismiss) {
+        runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Medium);
         // Animate out
         dismissY.value = withTiming(-600, { duration: TIMING.DISMISS_DURATION });
         dismissOpacity.value = withTiming(0, { duration: TIMING.DISMISS_DURATION });
-        runOnJS(handleDismiss)();
+        runOnJS(onDismiss)();
       } else {
         // Snap back
         dismissY.value = withSpring(0, { damping: 15 });
@@ -139,8 +170,8 @@ export function FlipCard({
       }
     });
 
-  // Combine gestures - tap for flip, pan for dismiss
-  const composedGesture = Gesture.Race(tapGesture, panGesture);
+  // Combine gestures - pan takes priority if moving, otherwise tap
+  const composedGesture = Gesture.Exclusive(panGesture, tapGesture);
 
   // Container style (position in stack + dismiss animation)
   const containerStyle = useAnimatedStyle(() => ({
@@ -190,6 +221,11 @@ export function FlipCard({
         <Animated.View style={[styles.cardFace, frontStyle]}>
           <CardFront pet={pet} baseAnimal={baseAnimal} />
           {effects.glow && <RareEffects rarity={baseAnimal.rarity} />}
+          <CardShine
+            active={isFlipped}
+            delay={200}
+            color={RARITY_COLORS[baseAnimal.rarity] || '#fff'}
+          />
         </Animated.View>
       </Animated.View>
     </GestureDetector>

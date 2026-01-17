@@ -15,7 +15,7 @@ import * as Haptics from 'expo-haptics';
 
 const PACK_WIDTH = 220;
 const PACK_HEIGHT = 300;
-const TEAR_THRESHOLD = 120; // pixels to complete tear
+const TEAR_THRESHOLD = 180; // pixels to complete tear (increased for more satisfying drag)
 
 interface PackTearZoneProps {
   onTearComplete: () => void;
@@ -38,14 +38,19 @@ export function PackTearZone({ onTearComplete, disabled }: PackTearZoneProps) {
     return () => clearInterval(interval);
   }, []);
 
-  // Haptic feedback at progress milestones
+  // Haptic feedback at progress milestones - more frequent and stronger
   useAnimatedReaction(
     () => tearProgress.value,
     (current) => {
-      const milestones = [0.25, 0.5, 0.75];
+      const milestones = [0.15, 0.3, 0.45, 0.6, 0.75, 0.9];
       for (const milestone of milestones) {
         if (current >= milestone && lastHapticProgress.value < milestone) {
-          runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Light);
+          // Stronger haptics as we get closer to completion
+          if (milestone >= 0.6) {
+            runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Heavy);
+          } else {
+            runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Medium);
+          }
         }
       }
       lastHapticProgress.value = current;
@@ -53,7 +58,10 @@ export function PackTearZone({ onTearComplete, disabled }: PackTearZoneProps) {
   );
 
   const handleTearComplete = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    // Strong haptic burst on complete
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 50);
+    setTimeout(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success), 100);
     onTearComplete();
   };
 

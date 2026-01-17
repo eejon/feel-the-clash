@@ -5,3 +5,7 @@ export { CardStack } from './CardStack';
 export { RareEffects } from './RareEffects';
 export { Sparkles } from './Sparkles';
 export { PackTearZone } from './PackTearZone';
+export { CardShine } from './CardShine';
+export { AmbientParticles } from './AmbientParticles';
+export { ScreenFlash } from './ScreenFlash';
+export type { ScreenFlashRef } from './ScreenFlash';
