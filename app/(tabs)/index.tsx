@@ -172,8 +172,8 @@ export default function HomeScreen() {
 
   const startChallenge = () => {
     // Shake and blow now use gachaBall, slap stays in game
-    // const modes = ['shake', 'grab', 'blow', 'smile'];
-    const modes = ['shake', 'grab', 'blow'];
+    const modes = ['shake', 'grab', 'blow', 'smile'];
+    // const modes = ['shake', 'grab', 'blow'];
     const randomMode = modes[Math.floor(Math.random() * modes.length)];
 
     if (randomMode === 'shake' || randomMode === 'blow' || randomMode === 'grab') {
