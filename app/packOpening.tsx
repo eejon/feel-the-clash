@@ -30,7 +30,7 @@ import {
   preloadPackOpeningSounds,
   playPackOpenSound,
   playRevealSound,
-  unloadPackOpeningSounds,
+  unloadSounds,
 } from '@/utils/sounds';
 
 export default function PackOpeningScreen() {
@@ -55,7 +55,7 @@ export default function PackOpeningScreen() {
 
     // Cleanup sounds on unmount
     return () => {
-      unloadPackOpeningSounds();
+      unloadSounds();
     };
   }, []);
 

@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "GachaPets",
-    "slug": "GachaPets",
+    "name": "BoosterPets",
+    "slug": "BoosterPets",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "GachaPets",
+    "scheme": "BoosterPets",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -13,7 +13,7 @@
       "infoPlist": {
         "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera"
       },
-      "bundleIdentifier": "com.tehtarik.GachaPets"
+      "bundleIdentifier": "com.tehtarik.BoosterPets"
     },
     "android": {
       "adaptiveIcon": {
@@ -28,7 +28,7 @@
         "android.permission.CAMERA",
         "android.permission.CAMERA"
       ],
-      "package": "com.tehtarik.GachaPets"
+      "package": "com.tehtarik.BoosterPets"
     },
     "web": {
       "output": "static",
