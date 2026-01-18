@@ -18,6 +18,7 @@ import * as Haptics from 'expo-haptics';
 
 import {
   CardStack,
+  CardGallery,
   PackTearZone,
   AmbientParticles,
   ScreenFlash,
@@ -235,10 +236,10 @@ export default function PackOpeningScreen() {
             />
           )}
 
-          {/* Complete state */}
+          {/* Complete state - show card gallery */}
           {phase === 'COMPLETE' && (
             <View style={styles.completeContainer}>
-              <Text style={styles.completeEmoji}>🎉</Text>
+              <CardGallery pets={pulledPets} />
               <Text style={styles.completeText}>
                 You got {pulledPets.length} new pets!
               </Text>
@@ -284,16 +285,16 @@ const styles = StyleSheet.create({
   },
   // Complete styles
   completeContainer: {
+    flex: 1,
+    width: '100%',
     alignItems: 'center',
-  },
-  completeEmoji: {
-    fontSize: 100,
-    marginBottom: 20,
+    justifyContent: 'center',
   },
   completeText: {
     color: '#fff',
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '700',
+    marginTop: 16,
   },
   // Button
   collectBtn: {
