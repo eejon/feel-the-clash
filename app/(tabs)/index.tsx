@@ -172,10 +172,11 @@ export default function HomeScreen() {
 
   const startChallenge = () => {
     // Shake and blow now use gachaBall, slap stays in game
-    const modes = ['shake', 'slap', 'blow'];
+    // const modes = ['shake', 'grab', 'blow', 'smile'];
+    const modes = ['shake', 'grab', 'blow'];
     const randomMode = modes[Math.floor(Math.random() * modes.length)];
 
-    if (randomMode === 'shake' || randomMode === 'blow') {
+    if (randomMode === 'shake' || randomMode === 'blow' || randomMode === 'grab') {
       // Route to gacha ball with the specific mode
       router.push({ pathname: '/gachaBall', params: { mode: randomMode } } as any);
     } else {

@@ -67,4 +67,4 @@ export type GachaBallPhase =
   | 'COMPLETE';
 
 // Gacha mode - which interaction is enabled
-export type GachaMode = 'shake' | 'blow' | 'both';
+export type GachaMode = 'shake' | 'blow' | 'grab';

@@ -7,6 +7,7 @@ const SOUND_FILES = {
   legendary: require('@/assets/sound-effects/legendary.mp3'),
   epic: require('@/assets/sound-effects/epic.mp3'),
   rare: require('@/assets/sound-effects/rare.mp3'),
+  gacha: require('@/assets/sound-effects/gacha.mp3'),
   default: require('@/assets/sound-effects/default.mp3'),
 };
 
@@ -76,6 +77,17 @@ async function playSound(key: keyof typeof SOUND_FILES, volume: number = 1.0): P
   }
 }
 
+// Preload all gacha ball sound
+export async function preloadGachaBallSound(): Promise<void> {
+  await Promise.all([
+    preloadSound('gacha'),
+  ]);
+}
+// Play gacha ball sound
+export async function playGachaBallSound(): Promise<void> {
+  await playSound('gacha', 1.0);
+}
+
 // Preload all pack opening sounds
 export async function preloadPackOpeningSounds(): Promise<void> {
   await Promise.all([
@@ -112,7 +124,7 @@ export async function playRevealSound(rarity: number): Promise<void> {
 }
 
 // Cleanup sounds (call when leaving screen)
-export async function unloadPackOpeningSounds(): Promise<void> {
+export async function unloadSounds(): Promise<void> {
   for (const sound of soundCache.values()) {
     try {
       await sound.unloadAsync();
