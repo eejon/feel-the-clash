@@ -1,4 +1,4 @@
-package com.tehtarik.BoosterPets
+package com.tehdrink.BoosterPets
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

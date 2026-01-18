@@ -1,4 +1,4 @@
-package com.tehtarik.BoosterPets
+package com.tehdrink.BoosterPets
 
 import android.app.Application
 import android.content.res.Configuration

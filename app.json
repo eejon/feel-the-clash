@@ -2,7 +2,7 @@
   "expo": {
     "name": "BoosterPets",
     "slug": "BoosterPets",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "BoosterPets",
@@ -11,9 +11,9 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera"
+        "NSCameraUsageDescription": "$(PRODUCT_NAME) needs access to your camera."
       },
-      "bundleIdentifier": "com.tehtarik.boosterpets"
+      "bundleIdentifier": "com.tehdrink.boosterpets"
     },
     "android": {
       "adaptiveIcon": {
@@ -25,10 +25,9 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
-        "android.permission.CAMERA",
         "android.permission.CAMERA"
       ],
-      "package": "com.tehtarik.BoosterPets"
+      "package": "com.tehdrink.BoosterPets"
     },
     "web": {
       "output": "static",
@@ -58,7 +57,7 @@
         "expo-build-properties",
         {
           "ios": {
-            "deploymentTarget": "15.1" 
+            "deploymentTarget": "15.1"
           }
         }
       ],
@@ -72,6 +71,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "1e97002f-225b-4463-ba29-4901afbef2ad"
+      }
     }
   }
 }
