@@ -1,10 +1,11 @@
-# Feel The Clash
+# Booster Pets
+Team: feel-the-clash
 
 > A sensory gacha pet collection game that uses your phone's accelerometer and microphone to create an immersive pack-opening experience.
 
 ## What is it?
 
-**Feel The Clash** transforms the digital gacha experience into something physical and satisfying. Instead of just tapping buttons, you actually *shake* your phone to rattle the capsule and *blow* into the microphone to frost it open. Every interaction has weight, haptic feedback, and beautiful animations.
+**Booster Pets** transforms the digital gacha experience into something physical and satisfying. Instead of just tapping buttons, you actually *shake* your phone to rattle the capsule and *blow* into the microphone to frost it open. Every interaction has weight, haptic feedback, and beautiful animations.
 
 ## Features
 
