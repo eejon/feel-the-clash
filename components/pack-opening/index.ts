@@ -2,6 +2,7 @@ export { CardBack } from './CardBack';
 export { CardFront } from './CardFront';
 export { FlipCard } from './FlipCard';
 export { CardStack } from './CardStack';
+export { CardGallery } from './CardGallery';
 export { RareEffects } from './RareEffects';
 export { Sparkles } from './Sparkles';
 export { PackTearZone } from './PackTearZone';
